@@ -1,35 +1,31 @@
-from anilist_model import get_last_activity, get_user_id
-from discord_rpc import connect_rpc, update_rpc
-from logger import log
+from pystray import Icon, Menu, MenuItem 
+from PIL import Image
+import threading
+import server
 from dotenv import load_dotenv
 from os import getenv
-import time
-
-log('AniList Discord RPC Launched')
 
 load_dotenv()
-ANILIST_USERNAME=getenv('ANILIST_USERNAME')
-ANILIST_USERID=get_user_id(ANILIST_USERNAME)
-UPDATE_FREQUENCE=int(getenv('UPDATE_FREQUENCE'))
+ICON_PATH = getenv('ICON_PATH')
 
-rpc = connect_rpc()
+stop_event = threading.Event()
 
-activity = get_last_activity(ANILIST_USERID)
+def on_clicked(icon, item):
+	stop_event.set()
+	icon.stop()
 
-update_rpc(rpc, activity)
+threading.Thread(
+	target=server.run,
+	args=(stop_event,),
+	daemon=True
+).start()
 
-log('RPC active')
+icon = Icon(
+	'AniList Activity RPC',
+	icon= Image.open(ICON_PATH),
+	menu= Menu(
+		MenuItem('Quit', on_clicked)
+	)
+)
 
-try:
-    while True:
-        new_activity = get_last_activity(ANILIST_USERID)
-        if activity != new_activity:
-            activity = new_activity
-            update_rpc(rpc, activity)
-            log(f'RPC updated, new activity: {activity}')
-        time.sleep(UPDATE_FREQUENCE)
-except KeyboardInterrupt:
-    rpc.clear()
-    rpc.close()
-    log('RPC cleared')
-    log('AniList Discord RPC stopped')
+icon.run()
