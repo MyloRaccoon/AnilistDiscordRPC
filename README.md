@@ -1,4 +1,4 @@
-# AniList Discord RPC
+# AniList Activity RPC
 Display your last AniList activity on your discord profile
 #### /!\ Disclaimer /!\
 This is unoficial
